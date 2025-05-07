@@ -8,6 +8,8 @@ const TodosList = () => {
   const [skip, setSkip] = useState(0);
   const limit = 10;
   const [loading, setLoading] = useState(false);
+  const currentPage = Math.floor(skip / limit) + 1;
+  const maxPages = 3;
 
   const loadTodos = async () => {
     try {
@@ -37,10 +39,10 @@ const TodosList = () => {
   }, [skip]);
 
   return (
-    <div className="min-h-screen text-white py-10 px-4" style={{ backgroundColor: 'rgb(168 193 219)' }}>
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen text-white py-10 px-4 flex flex-col justify-between" style={{ backgroundColor: 'rgb(168 193 219)' }}>
+      <div className="max-w-5xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold" style={{color:"chocolate"}}>📋 Todos</h1>
+          <h1 className="text-3xl font-bold" style={{ color: "chocolate" }}>📋 Todos</h1>
           <Link
             to="/add"
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition"
@@ -66,29 +68,14 @@ const TodosList = () => {
                   <tr key={todo.id} className="hover:bg-gray-100">
                     <td className="p-4">{todo.todo}</td>
                     <td className="p-4 text-center">
-                      <span
-                        className={`px-3 py-1 text-xs font-medium rounded-full ${
-                          todo.completed
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}
-                      >
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${todo.completed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {todo.completed ? '✅ Done' : '❌ Pending'}
                       </span>
                     </td>
                     <td className="p-4 text-center space-x-3">
-                      <Link to={`/todo/${todo.id}`} className="text-blue-600 hover:underline">
-                        View
-                      </Link>
-                      <Link to={`/edit/${todo.id}`} className="text-green-600 hover:underline">
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(todo.id)}
-                        className="text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
+                      <Link to={`/todo/${todo.id}`} className="text-blue-600 hover:underline">View</Link>
+                      <Link to={`/edit/${todo.id}`} className="text-green-600 hover:underline">Edit</Link>
+                      <button onClick={() => handleDelete(todo.id)} className="text-red-600 hover:underline">Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -97,7 +84,8 @@ const TodosList = () => {
           </div>
         )}
 
-        <div className="flex justify-between mt-6">
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-6">
           <button
             disabled={skip === 0}
             onClick={() => setSkip(skip - limit)}
@@ -105,14 +93,23 @@ const TodosList = () => {
           >
             ⬅️ Prev
           </button>
+          <span className="text-gray-100 font-medium text-lg">
+            Page {currentPage} of {maxPages}
+          </span>
           <button
+            disabled={currentPage === maxPages}
             onClick={() => setSkip(skip + limit)}
-            className="px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+            className="px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:opacity-50"
           >
             Next ➡️
           </button>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="mt-12 text-center text-sm text-white opacity-70">
+        © {new Date().getFullYear()} Todos CRUD App — Page {currentPage}/{maxPages} | 10 items per page
+      </footer>
     </div>
   );
 };
