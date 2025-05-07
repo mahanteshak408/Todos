@@ -18,6 +18,7 @@ const TodosList = () => {
   const maxPages = Math.ceil(todos.length / limit);
 
   // Only fetch from API once on initial load
+  
   useEffect(() => {
     if (status === 'idle') {
       dispatch(getTodos());
