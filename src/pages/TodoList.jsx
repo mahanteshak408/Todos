@@ -1,42 +1,38 @@
-import { useEffect, useState } from 'react';
-import { fetchTodos, deleteTodo } from '../api/todo';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import {
+  getTodos,
+  removeTodoLocal,
+  setSkip,
+} from '../todosSlice';
 
 const TodosList = () => {
-  const [todos, setTodos] = useState([]);
-  const [skip, setSkip] = useState(0);
-  const limit = 10;
-  const [loading, setLoading] = useState(false);
-  const currentPage = Math.floor(skip / limit) + 1;
-  const maxPages = 3;
+  const dispatch = useDispatch();
+  const { todos, skip, limit, status } = useSelector((state) => state.todos);
 
-  const loadTodos = async () => {
-    try {
-      setLoading(true);
-      const res = await fetchTodos(limit, skip);
-      setTodos(res.data.todos);
-    } catch (error) {
-      toast.error("Failed to fetch todos.");
-    } finally {
-      setLoading(false);
+  // Derived values
+  const paginatedTodos = todos.slice(skip, skip + limit);
+  const currentPage = Math.floor(skip / limit) + 1;
+  const maxPages = Math.ceil(todos.length / limit);
+
+  // Only fetch from API once on initial load
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(getTodos());
     }
-  };
+  }, [status, dispatch]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this todo?")) return;
     try {
-      await deleteTodo(id);
+      dispatch(removeTodoLocal(id));
       toast.success("Todo deleted");
-      loadTodos();
     } catch {
       toast.error("Failed to delete");
     }
   };
-
-  useEffect(() => {
-    loadTodos();
-  }, [skip]);
 
   return (
     <div className="min-h-screen text-white py-10 px-4 flex flex-col justify-between" style={{ backgroundColor: 'rgb(168 193 219)' }}>
@@ -51,7 +47,7 @@ const TodosList = () => {
           </Link>
         </div>
 
-        {loading ? (
+        {status === 'loading' ? (
           <div className="text-center text-gray-300 py-10">Loading...</div>
         ) : (
           <div className="overflow-x-auto bg-white text-gray-800 rounded-xl shadow border border-gray-200">
@@ -64,7 +60,7 @@ const TodosList = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {todos.map((todo) => (
+                {paginatedTodos.map((todo) => (
                   <tr key={todo.id} className="hover:bg-gray-100">
                     <td className="p-4">{todo.todo}</td>
                     <td className="p-4 text-center">
@@ -88,7 +84,7 @@ const TodosList = () => {
         <div className="flex items-center justify-between mt-6">
           <button
             disabled={skip === 0}
-            onClick={() => setSkip(skip - limit)}
+            onClick={() => dispatch(setSkip(skip - limit))}
             className="px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:opacity-50"
           >
             ⬅️ Prev
@@ -98,7 +94,7 @@ const TodosList = () => {
           </span>
           <button
             disabled={currentPage === maxPages}
-            onClick={() => setSkip(skip + limit)}
+            onClick={() => dispatch(setSkip(skip + limit))}
             className="px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:opacity-50"
           >
             Next ➡️
@@ -108,7 +104,7 @@ const TodosList = () => {
 
       {/* Footer */}
       <footer className="mt-12 text-center text-sm text-white opacity-70">
-        © {new Date().getFullYear()} Todos CRUD App — Page {currentPage}/{maxPages} | 10 items per page
+        © {new Date().getFullYear()} Todos CRUD App — Page {currentPage}/{maxPages} | {limit} items per page
       </footer>
     </div>
   );

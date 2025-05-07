@@ -1,30 +1,42 @@
+// src/components/TodoForm.jsx
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { fetchTodo, createTodo, updateTodo } from '../api/todo';
+import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { addTodoLocal, updateTodoLocal } from '../todosSlice';
 
 const TodoForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const isEdit = Boolean(id);
+
+  // ✅ Get todo from Redux store using ID
+  const todoFromStore = useSelector(state =>
+    state.todos.todos.find(todo => String(todo.id) === id)
+  );
+
   const [todo, setTodo] = useState({ todo: '', completed: false });
 
+  // ✅ Prefill form with data from store (if editing)
   useEffect(() => {
-    if (isEdit) {
-      fetchTodo(id)
-        .then(res => setTodo({ todo: res.data.todo, completed: res.data.completed }))
-        .catch(() => toast.error("Failed to load todo"));
+    if (isEdit && todoFromStore) {
+      setTodo({
+        todo: todoFromStore.todo,
+        completed: todoFromStore.completed,
+      });
     }
-  }, [id]);
+  }, [isEdit, todoFromStore]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     try {
       if (isEdit) {
-        await updateTodo(id, todo);
+        dispatch(updateTodoLocal({ id, ...todo }));
         toast.success("Todo updated successfully");
       } else {
-        await createTodo(todo);
+        const newId = Date.now().toString(); // or nanoid()
+        dispatch(addTodoLocal({ id: newId, ...todo }));
         toast.success("Todo created successfully");
       }
       navigate('/');
